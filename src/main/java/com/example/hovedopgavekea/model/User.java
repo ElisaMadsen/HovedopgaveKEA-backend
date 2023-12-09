@@ -18,10 +18,15 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
     private String userName;
-    private String fieldOfStudy;
     private int graduationYear;
     private String userEmail;
     private String userPassword;
+
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @JoinColumn(name = "field_of_study_id")
+    @JsonBackReference
+    @EqualsAndHashCode.Exclude
+    private FieldOfStudy fieldOfStudy;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonManagedReference

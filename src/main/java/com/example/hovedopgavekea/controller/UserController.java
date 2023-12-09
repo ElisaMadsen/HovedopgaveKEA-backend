@@ -1,6 +1,10 @@
 package com.example.hovedopgavekea.controller;
 
+import com.example.hovedopgavekea.model.FieldOfStudy;
+import com.example.hovedopgavekea.model.LoginRequest;
+import com.example.hovedopgavekea.model.Post;
 import com.example.hovedopgavekea.model.User;
+import com.example.hovedopgavekea.service.IFieldOfStudyService;
 import com.example.hovedopgavekea.service.IUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +18,11 @@ import java.util.Set;
 public class UserController {
 
     private IUserService userService;
+    private IFieldOfStudyService fieldOfStudyService;
 
-    public UserController (IUserService userService) {
+    public UserController (IUserService userService, IFieldOfStudyService fieldOfStudyService) {
         this.userService = userService;
+        this.fieldOfStudyService = fieldOfStudyService;
     }
 
     @GetMapping("/users/all")
@@ -26,12 +32,46 @@ public class UserController {
 
     @PostMapping("/createUser")
     public ResponseEntity<User> createUser(@RequestBody User user) {
+        // Check if fieldOfStudy is provided
+        FieldOfStudy fieldOfStudy = user.getFieldOfStudy();
+        if (fieldOfStudy != null) {
+            // Check if fieldOfStudyId is provided
+            Long fieldOfStudyId = fieldOfStudy.getFieldOfStudyId();
+            if (fieldOfStudyId != null) {
+                // Fetch the FieldOfStudy from the database
+                Optional<FieldOfStudy> fieldOfStudyOptional = fieldOfStudyService.findById(fieldOfStudyId);
 
-        if (userService.save(user) !=null) {
-            return new ResponseEntity<>(user, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
+                // Check if the FieldOfStudy exists
+                if (fieldOfStudyOptional.isPresent()) {
+                    FieldOfStudy fetchedFieldOfStudy = fieldOfStudyOptional.get();
+                    user.setFieldOfStudy(fetchedFieldOfStudy);
+                } else {
+                    // Return an error response if the FieldOfStudy does not exist
+                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                }
+            }
         }
+
+        // Save the User
+        User savedUser = userService.save(user);
+
+        if (savedUser != null) {
+            return new ResponseEntity<>(savedUser, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
+    @PostMapping("/login")
+    public ResponseEntity<User> loginUser(@RequestBody LoginRequest loginRequest) {
+        Optional<User> loggedInUser = userService.findByUserEmailAndUserPassword(
+                loginRequest.getUserEmail(),
+                loginRequest.getUserPassword()
+        );
+
+        return loggedInUser.map(user -> new ResponseEntity<>(user, HttpStatus.OK))
+                .orElseGet(() -> new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
     }
 
     @PutMapping("/updateUser")
@@ -65,8 +105,20 @@ public class UserController {
         return new ResponseEntity(userService.findById(id), HttpStatus.OK);
     }
 
+    @GetMapping("/{userId}/posts")
+    public ResponseEntity<Set<Post>> getUserPosts(@PathVariable Long userId) {
+        Optional<User> user = userService.findById(userId);
 
-    @DeleteMapping("/deleteUser/{id}")
+        if (user.isPresent()) {
+            Set<Post> userPosts = user.get().getPosts();
+            return new ResponseEntity<>(userPosts, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+
+    @DeleteMapping("/{id}")
     public ResponseEntity<User> deleteUser(@PathVariable Long id){
         userService.deleteById(id);
         return new ResponseEntity<>(HttpStatus.OK);

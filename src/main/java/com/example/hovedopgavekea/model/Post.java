@@ -20,10 +20,9 @@ public class Post {
     private String post;
     private String postDate;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "user_id")
     @JsonBackReference
     @EqualsAndHashCode.Exclude
     private User user;
-
 }

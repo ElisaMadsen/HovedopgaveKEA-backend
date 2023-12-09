@@ -13,7 +13,10 @@ public class PostDTO {
 
     private Long userId;
     private String userName;
-    private String fieldOfStudy;
+
+    private Long fieldOfStudyId;
+    private String fieldOfStudyName;
+
     private int graduationYear;
     private String userEmail;
     private String userPassword;

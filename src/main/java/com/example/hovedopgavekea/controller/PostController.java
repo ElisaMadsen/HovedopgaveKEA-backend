@@ -1,70 +1,101 @@
 package com.example.hovedopgavekea.controller;
 
+import com.example.hovedopgavekea.model.FieldOfStudy;
 import com.example.hovedopgavekea.model.Post;
 import com.example.hovedopgavekea.model.PostDTO;
 import com.example.hovedopgavekea.model.User;
+import com.example.hovedopgavekea.service.IFieldOfStudyService;
 import com.example.hovedopgavekea.service.IPostService;
 import com.example.hovedopgavekea.service.IUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
-@CrossOrigin
 @RestController
 @RequestMapping("/api/v1/post")
-
 public class PostController {
 
     private IPostService postService;
     private IUserService userService;
+    private IFieldOfStudyService fieldOfStudyService;
 
-    public PostController(IPostService postService, IUserService userService) {
+
+    public PostController(IPostService postService, IUserService userService, IFieldOfStudyService fieldOfStudyService) {
         this.postService = postService;
         this.userService = userService;
-
+        this.fieldOfStudyService = fieldOfStudyService;
     }
 
     @GetMapping("/posts/all")
+    @CrossOrigin
     public ResponseEntity<List<PostDTO>> getAllPosts(){
         Set<Post> allPosts = postService.findAll();
         List<PostDTO> postDTOs = new ArrayList<>();
 
-        allPosts.forEach(post -> {
-            PostDTO postDTO = new PostDTO();
-            Long id = post.getUser().getUserId();
-            User user = userService.findById(id).get();
-            postDTO.setPostId(post.getPostId());
-            postDTO.setPostTitle(post.getPostTitle());
-            postDTO.setPost(post.getPost());
-            postDTO.setPostDate(post.getPostDate());
-            postDTO.setUserId(id);
-            postDTO.setUserName(user.getUserName());
-            postDTO.setFieldOfStudy(user.getFieldOfStudy());
-            postDTO.setGraduationYear(user.getGraduationYear());
-            postDTO.setUserEmail(user.getUserEmail());
-            postDTO.setUserPassword(user.getUserPassword());
-            postDTOs.add(postDTO);
-        });
+        allPosts.stream()
+                .sorted(Comparator.comparing(Post::getPostDate)) // Sort by post date in ascending order
+                .forEach(post -> {
+                    PostDTO postDTO = new PostDTO();
+                    Long userId = post.getUser().getUserId();
+                    User user = userService.findById(userId).get();
+                    Long fieldOfStudyId = user.getFieldOfStudy().getFieldOfStudyId();
+                    FieldOfStudy fieldOfStudy = fieldOfStudyService.findById(fieldOfStudyId).get();
+
+                    postDTO.setPostId(post.getPostId());
+                    postDTO.setPostTitle(post.getPostTitle());
+                    postDTO.setPost(post.getPost());
+                    postDTO.setPostDate(post.getPostDate());
+                    postDTO.setUserId(userId);
+                    postDTO.setUserName(user.getUserName());
+
+                    postDTO.setFieldOfStudyId(fieldOfStudyId);
+                    postDTO.setFieldOfStudyName(fieldOfStudy.getFieldOfStudyName());
+
+                    postDTO.setGraduationYear(user.getGraduationYear());
+                    postDTO.setUserEmail(user.getUserEmail());
+                    postDTO.setUserPassword(user.getUserPassword());
+                    postDTOs.add(postDTO);
+                });
         return new ResponseEntity<>(postDTOs, HttpStatus.OK);
     }
 
+
     @PostMapping("/createPost")
-    public ResponseEntity<String> createPost(@RequestBody Post post, @RequestParam Long userId) {
-        Optional<User> user = userService.findById(userId);
-        if (user.isPresent()) {
-            post.setUser(user.get());
-            postService.save(post);
-            return new ResponseEntity<>("Post oprettet", HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>("User ikke fundet " + userId, HttpStatus.OK);
-        }
+    @CrossOrigin
+    public ResponseEntity<Post> createPost(@RequestBody PostDTO postDTO) {
+            // Extract user information from the incoming PostDTO
+            String userEmail = postDTO.getUserEmail();
+            String userPassword = postDTO.getUserPassword();
+
+            // Retrieve the logged-in user based on the provided email and password
+            Optional<User> loggedInUser = userService.findByUserEmailAndUserPassword(userEmail, userPassword);
+
+            if (loggedInUser.isPresent()) {
+                // Create the Post object
+                Post post = new Post();
+                post.setPostTitle(postDTO.getPostTitle());
+                post.setPost(postDTO.getPost());
+                post.setPostDate(String.valueOf(LocalDateTime.now()));
+
+                // Associate the user with the post
+                post.setUser(loggedInUser.get());
+
+                // Save the post
+                Post savedPost = postService.save(post);
+
+                return ResponseEntity.ok(savedPost);
+            } else {
+                // Return a response indicating that the user is not logged in
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+            }
     }
+
 
     @PutMapping("/updatePost")
     @CrossOrigin
@@ -92,27 +123,36 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
+    @CrossOrigin
     public ResponseEntity<PostDTO> getPostById(@PathVariable Long id){
 
         Optional<Post> post = postService.findById(id);
         Long postId = post.get().getUser().getUserId();
         Optional<User> user = userService.findById(postId);
-        PostDTO postDTO = new PostDTO();
+        Long fieldOfStudyId = user.get().getFieldOfStudy().getFieldOfStudyId();
+        Optional<FieldOfStudy>  fieldOfStudy = fieldOfStudyService.findById(fieldOfStudyId);
 
-        postDTO.setPostId(id);
-        postDTO.setPostTitle(post.get().getPostTitle());
-        postDTO.setPost(post.get().getPost());
-        postDTO.setPostDate(post.get().getPostDate());
-        postDTO.setUserId(user.get().getUserId());
-        postDTO.setUserName(user.get().getUserName());
-        postDTO.setFieldOfStudy(user.get().getFieldOfStudy());
-        postDTO.setGraduationYear(user.get().getGraduationYear());
-        postDTO.setUserEmail(user.get().getUserEmail());
-        postDTO.setUserPassword(user.get().getUserPassword());
-        return new ResponseEntity<>(postDTO, HttpStatus.OK);
-    }
+            PostDTO postDTO = new PostDTO();
 
-    @DeleteMapping("/deletePost/{id}")
+            postDTO.setPostId(id);
+            postDTO.setPostTitle(post.get().getPostTitle());
+            postDTO.setPost(post.get().getPost());
+            postDTO.setPostDate(post.get().getPostDate());
+
+            postDTO.setUserId(user.get().getUserId());
+            postDTO.setUserName(user.get().getUserName());
+
+            postDTO.setFieldOfStudyId(fieldOfStudy.get().getFieldOfStudyId());
+            postDTO.setFieldOfStudyName(fieldOfStudy.get().getFieldOfStudyName());
+
+            postDTO.setGraduationYear(user.get().getGraduationYear());
+            postDTO.setUserEmail(user.get().getUserEmail());
+            postDTO.setUserPassword(user.get().getUserPassword());
+            return new ResponseEntity<>(postDTO, HttpStatus.OK);
+        }
+
+    @DeleteMapping("/{id}")
+    @CrossOrigin
     public ResponseEntity<Post> deletePost(@PathVariable Long id){
         postService.deleteById(id);
         return new ResponseEntity<>(HttpStatus.OK);

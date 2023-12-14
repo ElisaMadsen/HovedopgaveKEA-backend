@@ -1,6 +1,5 @@
 package com.example.hovedopgavekea.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +22,10 @@ public class FieldOfStudy {
     private String fieldOfStudyName;
 
     @OneToMany(mappedBy = "fieldOfStudy", cascade = CascadeType.ALL)
-    @JsonManagedReference
     private Set<User> users = new HashSet<>();
+
+    public FieldOfStudy(String fieldOfStudyId) {
+        this.fieldOfStudyId = Long.parseLong(fieldOfStudyId);
+    }
 
 }

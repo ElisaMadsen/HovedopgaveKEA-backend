@@ -2,11 +2,13 @@ package com.example.hovedopgavekea.service;
 
 import com.example.hovedopgavekea.model.FieldOfStudy;
 import com.example.hovedopgavekea.model.Post;
+import com.example.hovedopgavekea.model.User;
 import com.example.hovedopgavekea.repository.FieldOfStudyRepository;
 import com.example.hovedopgavekea.repository.PostRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -45,5 +47,10 @@ public class FieldOfStudyService implements IFieldOfStudyService{
     @Override
     public Optional<FieldOfStudy> findById(Long aLong) {
         return fieldOfStudyRepository.findById(aLong);
+    }
+
+    @Override
+    public List<FieldOfStudy> findByFieldOfStudyName(String fieldOfStudyName) {
+        return fieldOfStudyRepository.findByFieldOfStudyName(fieldOfStudyName);
     }
 }

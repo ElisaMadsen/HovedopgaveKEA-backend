@@ -3,6 +3,7 @@ package com.example.hovedopgavekea.model;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Type;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,8 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long postId;
     private String postTitle;
+
+    @Column(columnDefinition = "TEXT")
     private String post;
     private String postDate;
 

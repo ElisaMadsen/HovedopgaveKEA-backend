@@ -22,14 +22,13 @@ public class User {
     private String userEmail;
     private String userPassword;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "field_of_study_id")
     @JsonBackReference
     @EqualsAndHashCode.Exclude
     private FieldOfStudy fieldOfStudy;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonManagedReference
     private Set<Post> posts = new HashSet<>();
 
 }

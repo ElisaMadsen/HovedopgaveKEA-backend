@@ -32,33 +32,11 @@ public class UserController {
 
     @PostMapping("/createUser")
     public ResponseEntity<User> createUser(@RequestBody User user) {
-        // Check if fieldOfStudy is provided
-        FieldOfStudy fieldOfStudy = user.getFieldOfStudy();
-        if (fieldOfStudy != null) {
-            // Check if fieldOfStudyId is provided
-            Long fieldOfStudyId = fieldOfStudy.getFieldOfStudyId();
-            if (fieldOfStudyId != null) {
-                // Fetch the FieldOfStudy from the database
-                Optional<FieldOfStudy> fieldOfStudyOptional = fieldOfStudyService.findById(fieldOfStudyId);
 
-                // Check if the FieldOfStudy exists
-                if (fieldOfStudyOptional.isPresent()) {
-                    FieldOfStudy fetchedFieldOfStudy = fieldOfStudyOptional.get();
-                    user.setFieldOfStudy(fetchedFieldOfStudy);
-                } else {
-                    // Return an error response if the FieldOfStudy does not exist
-                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-                }
-            }
-        }
-
-        // Save the User
-        User savedUser = userService.save(user);
-
-        if (savedUser != null) {
-            return new ResponseEntity<>(savedUser, HttpStatus.OK);
+        if(userService.save(user) != null) {
+            return new ResponseEntity<>(user, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(user, HttpStatus.BAD_REQUEST);
         }
     }
 

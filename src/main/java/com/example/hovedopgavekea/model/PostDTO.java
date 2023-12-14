@@ -1,9 +1,10 @@
 package com.example.hovedopgavekea.model;
 
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 @ToString
 public class PostDTO {
     private Long postId;
@@ -20,4 +21,9 @@ public class PostDTO {
     private int graduationYear;
     private String userEmail;
     private String userPassword;
+
+    public PostDTO(String postId) {
+        this.postId = Long.parseLong(postId);
+    }
+
 }

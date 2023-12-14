@@ -1,8 +1,12 @@
 package com.example.hovedopgavekea.model;
 
-import lombok.Data;
+import jakarta.persistence.Entity;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@ToString
 public class LoginRequest {
     private String userEmail;
     private String userPassword;

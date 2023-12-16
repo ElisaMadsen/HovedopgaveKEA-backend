@@ -39,7 +39,7 @@ public class PostController {
         List<PostDTO> postDTOs = new ArrayList<>();
 
         allPosts.stream()
-                .sorted(Comparator.comparing(Post::getPostDate)) // Sort by post date in ascending order
+                .sorted(Comparator.comparing(Post::getPostDate).reversed()) // Sort by post date in ascending order
                 .forEach(post -> {
                     PostDTO postDTO = new PostDTO();
                     Long userId = post.getUser().getUserId();

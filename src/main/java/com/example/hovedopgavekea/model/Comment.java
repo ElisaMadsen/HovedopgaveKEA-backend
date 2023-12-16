@@ -1,12 +1,10 @@
 package com.example.hovedopgavekea.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Type;
-import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,23 +13,24 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @ToString
-public class Post {
+public class Comment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long postId;
-    private String postTitle;
-
+    private Long commentId;
     @Column(columnDefinition = "TEXT")
-    private String post;
-    private String postDate;
+    private String comment;
+    private String commentDate;
+
+    @ManyToOne
+    @JoinColumn(name = "post_id")
+    @EqualsAndHashCode.Exclude
+    @JsonBackReference
+    private Post post;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonBackReference
     @EqualsAndHashCode.Exclude
+    @JsonBackReference
     private User user;
-
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
-    private Set<Comment> comments = new HashSet<>();
-
 }

@@ -51,6 +51,7 @@ public class CommentController {
             savedComment.setCommentDate(String.valueOf(LocalDateTime.now()));
             savedComment.setUser(loggedInUser.get());
             savedComment.setPost(post.get());
+
             Comment saveComment = commentService.save(savedComment);
 
             return ResponseEntity.ok(saveComment);

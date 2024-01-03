@@ -32,6 +32,9 @@ public class Post {
     private User user;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL)
+    @ToString.Exclude
     private Set<Comment> comments = new HashSet<>();
-
 }
+
+
+

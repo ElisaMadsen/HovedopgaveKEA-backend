@@ -69,51 +69,61 @@ public class UserController {
                 loginRequest.getUserPassword()
         );
 
-
         if(loggedInUser.isPresent()){
             System.out.println(loggedInUser.get().getUserId());
-            // create a new loging res LoginResponse logiRresponse = new LoginResponse();
-             // set value
-            // logiRresponse.setName(loggedInUser.get().getName();
-            // return new ResponseEntity<>(logiRresponse, HttpStatus.OK))
         }
-
-        //return  new ResponseEntity<>(new LoginResponse(), HttpStatus.BAD_REQUEST)
 
         return loggedInUser.map(user -> new ResponseEntity<>(user, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
     }
 
-    @PutMapping("/updateUser")
-    public ResponseEntity<?> updateUser(@RequestBody User user) {
-        Long userId = user.getUserId();
+    @PutMapping()
+    public ResponseEntity<?> updateUser(@RequestBody UserDTO userDTO){
+        Long userId = userDTO.getUserId();
         Optional<User> userToUpdate = userService.findById(userId);
+        Optional<FieldOfStudy> fieldOfStudyToUpdate = fieldOfStudyService.findById(userDTO.getFieldOfStudyId());
+        if (userToUpdate.isPresent() && fieldOfStudyToUpdate.isPresent()) {
+            FieldOfStudy fieldOfStudy = fieldOfStudyToUpdate.get();
+            fieldOfStudy.setFieldOfStudyId(fieldOfStudy.getFieldOfStudyId());
+            fieldOfStudy.setFieldOfStudyName(userDTO.getFieldOfStudyName());
+            FieldOfStudy savedFieldOfStudy = fieldOfStudyService.save(fieldOfStudy);
 
-        if (userToUpdate.isPresent()) {
-            User updatedUser = userToUpdate.get();
-            updatedUser.setUserId(user.getUserId());
-            updatedUser.setUserName(user.getUserName());
-            updatedUser.setFieldOfStudy(user.getFieldOfStudy());
-            updatedUser.setGraduationYear(user.getGraduationYear());
-            updatedUser.setUserEmail(user.getUserEmail());
-            updatedUser.setUserPassword(user.getUserPassword());
-
+            User user = userToUpdate.get();
+            user.setUserId(user.getUserId());
+            user.setUserName(user.getUserName());
+            user.setGraduationYear(userDTO.getGraduationYear());
+            user.setUserEmail(user.getUserEmail());
+            user.setUserPassword(user.getUserPassword());
+            user.setFieldOfStudy(savedFieldOfStudy);
             User savedUser = userService.save(user);
 
             if (savedUser == null) {
-                return new ResponseEntity<>("Failed to update user", HttpStatus.BAD_REQUEST);
+                return new ResponseEntity<>("Fejl i opdatering af bruger", HttpStatus.BAD_REQUEST);
             } else {
                 return new ResponseEntity<>(savedUser, HttpStatus.OK);
             }
         } else {
-            return new ResponseEntity<>("Couldn't find user", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Kunne ikke finde bruger", HttpStatus.BAD_REQUEST);
         }
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id){
-        return new ResponseEntity(userService.findById(id), HttpStatus.OK);
+    @GetMapping("/{userId}")
+    public ResponseEntity<FieldOfStudy> getUserFieldOfStudy(@PathVariable Long userId) {
+        Optional<User> userOptional = userService.findById(userId);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            FieldOfStudy fieldOfStudy = user.getFieldOfStudy();
+            if (fieldOfStudy != null) {
+                return new ResponseEntity<>(fieldOfStudy, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
+
 
     @GetMapping("/{userId}/posts")
     public ResponseEntity<Set<Post>> getUserPosts(@PathVariable Long userId) {
